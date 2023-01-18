@@ -3,7 +3,6 @@
 import asyncio
 import json
 import secrets
-import http
 
 import os
 import signal
@@ -163,13 +162,6 @@ async def watch(websocket, watch_key):
     finally:
         connected.remove(websocket)
 
-async def health_check(path, request_headers):
-    if path == "/healthz":
-        return http.HTTPStatus.OK, [], b"OK\n"
-
-async def echo(websocket):
-    async for message in websocket:
-        await websocket.send(message)
 
 async def handler(websocket):
     """
@@ -193,13 +185,6 @@ async def handler(websocket):
 
 
 async def main():
-
-    async with websockets.serve(
-        echo, "localhost", 8765,
-        process_request=health_check,
-    ):
-        await asyncio.Future()  # run forever
-
     # Set the stop condition when receiving SIGTERM.
     loop = asyncio.get_running_loop()
     stop = loop.create_future()
@@ -208,7 +193,6 @@ async def main():
     port = int(os.environ.get("PORT", "8001"))
     async with websockets.serve(handler, "", port):
         await stop
-
 
 
 if __name__ == "__main__":
